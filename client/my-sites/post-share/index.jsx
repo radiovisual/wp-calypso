@@ -356,7 +356,7 @@ class PostShare extends Component {
 				<div className="post-share__main">
 					<div className="post-share__form">
 						{ this.renderMessage() }
-						{ this.renderShareButton() }
+						{ this.renderSharingButtons() }
 					</div>
 
 					{ this.renderConnectionsSection() }
