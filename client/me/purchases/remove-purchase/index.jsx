@@ -3,7 +3,7 @@
  */
 import { connect } from 'react-redux';
 import page from 'page';
-import React from 'react';
+import React, { Component, PropTypes } from 'react';
 import Gridicon from 'gridicons';
 import { localize, moment } from 'i18n-calypso';
 import { get } from 'lodash';
@@ -42,49 +42,47 @@ const user = userFactory();
 import debugFactory from 'debug';
 const debug = debugFactory( 'calypso:purchases:survey' );
 
-const RemovePurchase = React.createClass( {
-	propTypes: {
-		hasLoadedUserPurchasesFromServer: React.PropTypes.bool.isRequired,
-		isDomainOnlySite: React.PropTypes.bool,
-		receiveDeletedSite: React.PropTypes.func.isRequired,
-		removePurchase: React.PropTypes.func.isRequired,
-		selectedPurchase: React.PropTypes.object,
-		selectedSite: React.PropTypes.oneOfType( [
-			React.PropTypes.object,
-			React.PropTypes.bool,
-			React.PropTypes.undefined
+class RemovePurchase extends Component {
+	static propTypes = {
+		hasLoadedUserPurchasesFromServer: PropTypes.bool.isRequired,
+		isDomainOnlySite: PropTypes.bool,
+		receiveDeletedSite: PropTypes.func.isRequired,
+		removePurchase: PropTypes.func.isRequired,
+		selectedPurchase: PropTypes.object,
+		selectedSite: PropTypes.oneOfType( [
+			PropTypes.object,
+			PropTypes.bool,
+			PropTypes.undefined
 		] ),
-		setAllSitesSelected: React.PropTypes.func.isRequired,
-	},
+		setAllSitesSelected: PropTypes.func.isRequired,
+	}
 
-	getInitialState() {
-		return {
-			isDialogVisible: false,
-			isRemoving: false,
-			surveyStep: 1,
-			survey: {
-				questionOneRadio: null,
-				questionTwoRadio: null
-			}
-		};
-	},
+	state = {
+		isDialogVisible: false,
+		isRemoving: false,
+		surveyStep: 1,
+		survey: {
+			questionOneRadio: null,
+			questionTwoRadio: null
+		}
+	}
 
 	componentWillMount() {
 		olarkEvents.on( 'api.chat.onBeginConversation', this.chatStarted );
-	},
+	}
 
 	componentWillUnmount() {
 		olarkEvents.off( 'api.chat.onBeginConversation', this.chatStarted );
-	},
+	}
 
-	chatStarted() {
+	chatStarted = () => {
 		this.recordChatEvent( 'calypso_precancellation_chat_begin' );
 		olarkApi( 'api.chat.sendNotificationToOperator', {
 			body: 'Context: Precancellation'
 		} );
-	},
+	}
 
-	recordChatEvent( eventAction ) {
+	recordChatEvent = ( eventAction ) => {
 		const purchase = this.props.selectedPurchase;
 		this.props.recordTracksEvent( eventAction, {
 			survey_step: this.state.surveyStep,
@@ -93,18 +91,18 @@ const RemovePurchase = React.createClass( {
 			is_domain_registration: isDomainRegistration( purchase ),
 			has_included_domain: hasIncludedDomain( purchase ),
 		} );
-	},
+	}
 
-	recordEvent( name, properties = {} ) {
+	recordEvent = ( name, properties = {} ) => {
 		const product_slug = get( this.props, 'selectedPurchase.productSlug' );
 		const cancellation_flow = 'remove';
 		this.props.recordTracksEvent(
 			name,
 			Object.assign( { cancellation_flow, product_slug }, properties )
 		);
-	},
+	}
 
-	closeDialog() {
+	closeDialog = () => {
 		this.recordEvent( 'calypso_purchases_cancel_form_close' );
 		this.setState( {
 			isDialogVisible: false,
@@ -114,35 +112,35 @@ const RemovePurchase = React.createClass( {
 				questionTwoRadio: null
 			}
 		} );
-	},
+	}
 
-	openDialog( event ) {
+	openDialog = ( event ) => {
 		this.recordEvent( 'calypso_purchases_cancel_form_start' );
 		event.preventDefault();
 
 		this.setState( { isDialogVisible: true } );
-	},
+	}
 
-	openChat() {
+	openChat = () => {
 		olarkActions.expandBox();
 		olarkActions.focusBox();
 		this.recordChatEvent( 'calypso_precancellation_chat_click' );
 		this.setState( { isDialogVisible: false } );
-	},
+	}
 
-	changeSurveyStep() {
+	changeSurveyStep = () => {
 		const newStep = this.state.surveyStep === 1 ? 2 : 1;
 		this.recordEvent( 'calypso_purchases_cancel_form_step', { new_step: newStep } );
 		this.setState( { surveyStep: newStep } );
-	},
+	}
 
-	onSurveyChange( update ) {
+	onSurveyChange = ( update ) => {
 		this.setState( {
 			survey: update,
 		} );
-	},
+	}
 
-	removePurchase( closeDialog ) {
+	removePurchase = ( closeDialog ) => {
 		this.setState( { isRemoving: true } );
 
 		const purchase = getPurchase( this.props );
@@ -218,9 +216,9 @@ const RemovePurchase = React.createClass( {
 
 				notices.error( this.props.selectedPurchase.error );
 			} );
-	},
+	}
 
-	renderCard() {
+	renderCard = () => {
 		const { translate } = this.props;
 		const productName = getName( getPurchase( this.props ) );
 
@@ -232,9 +230,9 @@ const RemovePurchase = React.createClass( {
 				</a>
 			</CompactCard>
 		);
-	},
+	}
 
-	getChatButton() {
+	getChatButton = () => {
 		const { translate } = this.props;
 		return {
 			action: 'chat',
@@ -242,9 +240,9 @@ const RemovePurchase = React.createClass( {
 			onClick: this.openChat,
 			label: translate( 'Need help? Chat with us' ),
 		};
-	},
+	}
 
-	renderDomainDialog() {
+	renderDomainDialog = () => {
 		const { translate } = this.props;
 		const buttons = [ {
 				action: 'cancel',
@@ -274,9 +272,9 @@ const RemovePurchase = React.createClass( {
 				{ this.renderDomainDialogText() }
 			</Dialog>
 		);
-	},
+	}
 
-	renderDomainDialogText() {
+	renderDomainDialogText = () => {
 		const { translate } = this.props;
 		const purchase = getPurchase( this.props ),
 			productName = getName( purchase );
@@ -293,9 +291,9 @@ const RemovePurchase = React.createClass( {
 				}
 			</p>
 		);
-	},
+	}
 
-	renderPlanDialogs() {
+	renderPlanDialogs = () => {
 		const { translate } = this.props;
 		const buttons = {
 				cancel: {
@@ -359,9 +357,9 @@ const RemovePurchase = React.createClass( {
 				</Dialog>
 			</div>
 		);
-	},
+	}
 
-	renderPlanDialogsText() {
+	renderPlanDialogsText = () => {
 		const { translate } = this.props;
 		const purchase = getPurchase( this.props ),
 			productName = getName( purchase ),
@@ -406,7 +404,7 @@ const RemovePurchase = React.createClass( {
 				{ ( isPlan( purchase ) && hasIncludedDomain( purchase ) ) && includedDomainText }
 			</div>
 		);
-	},
+	}
 
 	render() {
 		if ( isDataLoading( this.props ) || ! this.props.selectedSite ) {
@@ -425,7 +423,7 @@ const RemovePurchase = React.createClass( {
 			</span>
 		);
 	}
-} );
+}
 
 export default connect(
 	( state, { selectedSite } ) => ( {
