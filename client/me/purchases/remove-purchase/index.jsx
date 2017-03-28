@@ -5,7 +5,7 @@ import { connect } from 'react-redux';
 import page from 'page';
 import React from 'react';
 import Gridicon from 'gridicons';
-import { moment } from 'i18n-calypso';
+import { localize, moment } from 'i18n-calypso';
 import { get } from 'lodash';
 
 /**
@@ -146,7 +146,7 @@ const RemovePurchase = React.createClass( {
 		this.setState( { isRemoving: true } );
 
 		const purchase = getPurchase( this.props );
-		const { isDomainOnlySite, setAllSitesSelected, selectedSite } = this.props;
+		const { isDomainOnlySite, setAllSitesSelected, selectedSite, translate } = this.props;
 
 		if ( ! isDomainRegistration( purchase ) && config.isEnabled( 'upgrades/removal-survey' ) ) {
 			this.recordEvent( 'calypso_purchases_cancel_form_submit' );
@@ -194,14 +194,14 @@ const RemovePurchase = React.createClass( {
 					}
 
 					notices.success(
-						this.translate( 'The domain {{domain/}} was removed from your account.', {
+						translate( 'The domain {{domain/}} was removed from your account.', {
 							components: { domain: <em>{ productName }</em> }
 						} ),
 						{ persistent: true }
 					);
 				} else {
 					notices.success(
-						this.translate( '%(productName)s was removed from {{siteName/}}.', {
+						translate( '%(productName)s was removed from {{siteName/}}.', {
 							args: { productName },
 							components: { siteName: <em>{ selectedSite.domain }</em> }
 						} ),
@@ -221,38 +221,41 @@ const RemovePurchase = React.createClass( {
 	},
 
 	renderCard() {
+		const { translate } = this.props;
 		const productName = getName( getPurchase( this.props ) );
 
 		return (
 			<CompactCard className="remove-purchase__card" onClick={ this.openDialog }>
 				<a href="#">
 					<Gridicon icon="trash" />
-					{ this.translate( 'Remove %(productName)s', { args: { productName } } ) }
+					{ translate( 'Remove %(productName)s', { args: { productName } } ) }
 				</a>
 			</CompactCard>
 		);
 	},
 
 	getChatButton() {
+		const { translate } = this.props;
 		return {
 			action: 'chat',
 			additionalClassNames: 'remove-purchase__chat-button is-borderless',
 			onClick: this.openChat,
-			label: this.translate( 'Need help? Chat with us' ),
+			label: translate( 'Need help? Chat with us' ),
 		};
 	},
 
 	renderDomainDialog() {
+		const { translate } = this.props;
 		const buttons = [ {
 				action: 'cancel',
 				disabled: this.state.isRemoving,
-				label: this.translate( 'Cancel' )
+				label: translate( 'Cancel' )
 			},
 			{
 				action: 'remove',
 				disabled: this.state.isRemoving,
 				isPrimary: true,
-				label: this.translate( 'Remove Now' ),
+				label: translate( 'Remove Now' ),
 				onClick: this.removePurchase
 			} ],
 			productName = getName( getPurchase( this.props ) );
@@ -267,20 +270,21 @@ const RemovePurchase = React.createClass( {
 				className="remove-purchase__dialog"
 				isVisible={ this.state.isDialogVisible }
 				onClose={ this.closeDialog }>
-				<FormSectionHeading>{ this.translate( 'Remove %(productName)s', { args: { productName } } ) }</FormSectionHeading>
+				<FormSectionHeading>{ translate( 'Remove %(productName)s', { args: { productName } } ) }</FormSectionHeading>
 				{ this.renderDomainDialogText() }
 			</Dialog>
 		);
 	},
 
 	renderDomainDialogText() {
+		const { translate } = this.props;
 		const purchase = getPurchase( this.props ),
 			productName = getName( purchase );
 
 		return (
 			<p>
 				{
-					this.translate(
+					translate(
 						'This will remove %(domain)s from your account. By removing, ' +
 							'you are canceling the domain registration. This may stop ' +
 							'you from using it again, even with another service.',
@@ -292,11 +296,12 @@ const RemovePurchase = React.createClass( {
 	},
 
 	renderPlanDialogs() {
+		const { translate } = this.props;
 		const buttons = {
 				cancel: {
 					action: 'cancel',
 					disabled: this.state.isRemoving,
-					label: this.translate( 'Cancel' )
+					label: translate( 'Cancel' )
 				},
 				next: {
 					action: 'next',
@@ -305,20 +310,20 @@ const RemovePurchase = React.createClass( {
 						this.state.survey.questionTwoRadio === null ||
 						( this.state.survey.questionOneRadio === 'anotherReasonOne' && this.state.survey.questionOneText === '' ) ||
 						( this.state.survey.questionTwoRadio === 'anotherReasonTwo' && this.state.survey.questionTwoText === '' ),
-					label: this.translate( 'Next' ),
+					label: translate( 'Next' ),
 					onClick: this.changeSurveyStep
 				},
 				prev: {
 					action: 'prev',
 					disabled: this.state.isRemoving,
-					label: this.translate( 'Previous' ),
+					label: translate( 'Previous' ),
 					onClick: this.changeSurveyStep
 				},
 				remove: {
 					action: 'remove',
 					disabled: this.state.isRemoving,
 					isPrimary: true,
-					label: this.translate( 'Remove' ),
+					label: translate( 'Remove' ),
 					onClick: this.removePurchase
 				}
 			},
@@ -343,7 +348,7 @@ const RemovePurchase = React.createClass( {
 					className="remove-purchase__dialog"
 					isVisible={ this.state.isDialogVisible }
 					onClose={ this.closeDialog }>
-					<FormSectionHeading>{ this.translate( 'Remove %(productName)s', { args: { productName } } ) }</FormSectionHeading>
+					<FormSectionHeading>{ translate( 'Remove %(productName)s', { args: { productName } } ) }</FormSectionHeading>
 					<CancelPurchaseForm
 						surveyStep={ this.state.surveyStep }
 						showSurvey={ config.isEnabled( 'upgrades/removal-survey' ) }
@@ -357,12 +362,13 @@ const RemovePurchase = React.createClass( {
 	},
 
 	renderPlanDialogsText() {
+		const { translate } = this.props;
 		const purchase = getPurchase( this.props ),
 			productName = getName( purchase ),
 			includedDomainText = (
 				<p>
 					{
-						this.translate(
+						translate(
 							'The domain associated with this plan, {{domain/}}, will not be removed. ' +
 								'It will remain active on your site, unless also removed.',
 							{ components: { domain: <em>{ getIncludedDomain( purchase ) }</em> } }
@@ -375,7 +381,7 @@ const RemovePurchase = React.createClass( {
 			<div>
 				<p>
 					{
-						this.translate(
+						translate(
 							'Are you sure you want to remove %(productName)s from {{siteName/}}?',
 							{
 								args: { productName },
@@ -385,11 +391,11 @@ const RemovePurchase = React.createClass( {
 					}
 					{ ' ' }
 					{ isGoogleApps( purchase )
-						? this.translate(
+						? translate(
 							'Your G Suite account will continue working without interruption. ' +
 								'You will be able to manage your G Suite billing directly through Google.'
 						)
-						: this.translate(
+						: translate(
 							'You will not be able to reuse it again without purchasing a new subscription.',
 							{ comment: "'it' refers to a product purchased by a user" }
 						)
@@ -432,4 +438,4 @@ export default connect(
 		removePurchase,
 		setAllSitesSelected,
 	}
-)( RemovePurchase );
+)( localize( RemovePurchase ) );
