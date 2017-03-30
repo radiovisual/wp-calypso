@@ -12,6 +12,7 @@ import { isEnabled } from 'config';
  * Internal dependencies
  */
 import QueryPostTypes from 'components/data/query-post-types';
+import QueryPublicizeConnections from 'components/data/query-publicize-connections';
 import Button from 'components/button';
 import ButtonGroup from 'components/button-group';
 import { isPublicizeEnabled } from 'state/selectors';
@@ -20,14 +21,16 @@ import {
 	getSitePlanSlug,
 } from 'state/sites/selectors';
 import { getCurrentUserId, getCurrentUserCurrencyCode } from 'state/current-user/selectors';
-import { getSiteUserConnections, hasFetchedConnections } from 'state/sharing/publicize/selectors';
+import {
+	getSiteUserConnections,
+	hasFetchedConnections as siteHasFetchedConnections,
+} from 'state/sharing/publicize/selectors';
+
 import { fetchConnections as requestConnections, sharePost, dismissShareConfirmation } from 'state/sharing/publicize/actions';
 import { isRequestingSharePost, sharePostFailure, sharePostSuccessMessage } from 'state/sharing/publicize/selectors';
 import PostMetadata from 'lib/post-metadata';
 import PublicizeMessage from 'post-editor/editor-sharing/publicize-message';
 import Notice from 'components/notice';
-import NoticeAction from 'components/notice/notice-action';
-import QueryPublicizeConnections from 'components/data/query-publicize-connections';
 import {
 	hasFeature,
 	getSitePlanRawPrice,
@@ -43,7 +46,7 @@ import SectionNav from 'components/section-nav';
 import NavTabs from 'components/section-nav/tabs';
 import NavItem from 'components/section-nav/item';
 import Banner from 'components/banner';
-import Connection from './connection';
+import ConnectionsList, { NoConnectionsNotice } from './connections-list';
 import ActionsList from './publicize-actions-list';
 import CalendarButton from 'blocks/calendar-button';
 import formatCurrency from 'lib/format-currency';
@@ -55,7 +58,6 @@ import {
 class PostShare extends Component {
 	static propTypes = {
 		connections: PropTypes.array,
-		hasFetchedConnections: PropTypes.bool,
 		isPublicizeEnabled: PropTypes.bool,
 		planSlug: PropTypes.string,
 		post: PropTypes.object,
@@ -99,21 +101,6 @@ class PostShare extends Component {
 	}
 
 	isConnectionActive = connection => connection.status !== 'broken' && this.skipConnection( connection );
-
-	renderServices() {
-		if ( ! this.props.site || ! this.hasConnections() ) {
-			return;
-		}
-
-		return this.props.connections.map( connection =>
-			<Connection
-				connection={ connection }
-				onToggle= { this.toggleConnection }
-				isActive={ this.isConnectionActive( connection ) }
-				key={ connection.keyring_connection_ID }
-			/>
-		);
-	}
 
 	setMessage = message => this.setState( { message } );
 
@@ -239,10 +226,7 @@ class PostShare extends Component {
 					translate( 'Enjoy live chat support.' ),
 				] }
 				plan={ PLAN_BUSINESS }
-				title={
-					translate( 'Upgrade to a Business Plan!' )
-				}
-			/>
+				title={ translate( 'Upgrade to a Business Plan!' ) } />
 		);
 	}
 
@@ -317,6 +301,73 @@ class PostShare extends Component {
 		}
 	}
 
+	renderConnectionsSection() {
+		const { hasFetchedConnections, siteId, siteSlug, translate } = this.props;
+
+		// enrich connections
+		const connections = map( this.props.connections, connection => (
+			{ ...connection, isActive: this.isConnectionActive( connection ) } )
+		);
+
+		return (
+			<div className="post-share__services">
+				<h5 className="post-share__services-header">
+					{ translate( 'Connected services' ) }
+				</h5>
+
+				<ConnectionsList { ...{
+					connections,
+					hasFetchedConnections,
+					siteId,
+					siteSlug,
+				} }
+					onToggle={ this.toggleConnection }
+				/>
+
+				<Button
+					href={ '/sharing/' + siteId }
+					compact={ true }
+					className="post-share__services-add"
+				>
+					{ translate( 'Add account' ) }
+				</Button>
+			</div>
+		);
+	}
+
+	renderPrimarySection() {
+		const { hasFetchedConnections, siteSlug, translate } = this.props;
+
+		if ( ! hasFetchedConnections ) {
+			return null;
+		}
+
+		if ( ! this.hasConnections() ) {
+			return (
+				<NoConnectionsNotice { ...{
+					siteSlug,
+					translate,
+				} } />
+			);
+		}
+
+		return (
+			<div>
+				<div className="post-share__main">
+					<div className="post-share__form">
+						{ this.renderMessage() }
+						{ this.renderShareButton() }
+					</div>
+
+					{ this.renderConnectionsSection() }
+				</div>
+
+				{ this.renderUpgradeToGetSchedulingNudge() }
+				{ this.renderActionsSection() }
+			</div>
+		);
+	}
+
 	render() {
 		if ( ! this.props.isPublicizeEnabled ) {
 			return null;
@@ -327,7 +378,6 @@ class PostShare extends Component {
 		}
 
 		const {
-			connections,
 			hasRepublicizeFeature,
 			hasRepublicizeSchedulingFeature,
 			postId,
@@ -352,8 +402,8 @@ class PostShare extends Component {
 				{ this.renderRequestSharingNotice() }
 
 				<div className={ classes }>
-					<QueryPublicizeConnections siteId={ siteId } />
 					<QueryPostTypes siteId={ siteId } />
+					<QueryPublicizeConnections siteId={ siteId } />
 
 					<div className="post-share__head">
 						<h4 className="post-share__title">
@@ -364,75 +414,14 @@ class PostShare extends Component {
 								'Share your post on all of your connected social media accounts using ' +
 								'{{a}}Publicize{{/a}}.', {
 									components: {
-										a: <a href={ '/sharing/' + siteSlug } />
+										a: <a href={ `/sharing/${ siteSlug }` } />
 									}
 								}
 							) }
 						</div>
 					</div>
 
-					{ ! this.props.hasFetchedConnections &&
-						<div className="post-share__main">
-							<div className="post-share__form is-placeholder" />
-							<div className="post-share__services is-placeholder" />
-						</div>
-					}
-
-					{ this.props.hasFetchedConnections && this.hasConnections() &&
-						<div>
-							<div>
-								{ connections
-									.filter( connection => connection.status === 'broken' )
-									.map( connection => <Notice
-										key={ connection.keyring_connection_ID }
-										status="is-warning"
-										showDismiss={ false }
-										text={ translate( 'There is an issue connecting to %s.', { args: connection.label } ) }
-									>
-										<NoticeAction href={ '/sharing/' + siteSlug }>
-											{ translate( 'Reconnect' ) }
-										</NoticeAction>
-									</Notice> )
-								}
-							</div>
-
-							<div className="post-share__main">
-								<div className="post-share__form">
-									{ this.renderMessage() }
-									{ this.renderSharingButtons() }
-								</div>
-
-								<div className="post-share__services">
-									<h5 className="post-share__services-header">
-										{ translate( 'Connected services' ) }
-									</h5>
-									{ this.renderServices() }
-									<Button
-										href={ '/sharing/' + siteId }
-										compact={ true }
-										className="post-share__services-add"
-									>
-										{ translate( 'Add account' ) }
-									</Button>
-								</div>
-							</div>
-
-							{ this.renderUpgradeToGetSchedulingNudge() }
-							{ this.renderActionsSection() }
-						</div>
-					}
-
-					{ this.props.hasFetchedConnections && ! this.hasConnections() &&
-						<Notice
-							status="is-warning"
-							showDismiss={ false }
-							text={ translate( 'Connect an account to get started.' ) }
-						>
-							<NoticeAction href={ '/sharing/' + siteSlug }>
-								{ translate( 'Settings' ) }
-							</NoticeAction>
-						</Notice>
-					}
+					{ this.renderPrimarySection() }
 				</div>
 			</div>
 		);
@@ -450,12 +439,12 @@ export default connect(
 			siteId,
 			postId,
 			planSlug,
+			hasFetchedConnections: siteHasFetchedConnections( state, siteId ),
 			hasRepublicizeFeature: hasFeature( state, siteId, FEATURE_REPUBLICIZE ),
 			hasRepublicizeSchedulingFeature: hasFeature( state, siteId, FEATURE_REPUBLICIZE_SCHEDULING ),
 			siteSlug: getSiteSlug( state, siteId ),
 			isPublicizeEnabled: isPublicizeEnabled( state, siteId, props.post.type ),
 			connections: getSiteUserConnections( state, siteId, userId ),
-			hasFetchedConnections: hasFetchedConnections( state, siteId ),
 			requesting: isRequestingSharePost( state, siteId, postId ),
 			failed: sharePostFailure( state, siteId, postId ),
 			success: sharePostSuccessMessage( state, siteId, postId ),
