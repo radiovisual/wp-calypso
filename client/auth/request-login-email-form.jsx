@@ -8,6 +8,10 @@ import emailValidator from 'email-validator';
 /**
  * Internal dependencies
  */
+import {
+	fetchMagicLoginRequestEmail,
+	hideMagicLoginRequestForm,
+} from 'state/login/magic-login/actions';
 import FormButton from 'components/forms/form-button';
 import FormFieldset from 'components/forms/form-fieldset';
 import FormTextInput from 'components/forms/form-text-input';
@@ -17,7 +21,6 @@ import LoggedOutFormLinks from 'components/logged-out-form/links';
 import LoggedOutFormLinkItem from 'components/logged-out-form/link-item';
 import Notice from 'components/notice';
 
-import config from 'config';
 import debugFactory from 'debug';
 import formState from 'lib/form-state';
 import { getCurrentUser } from 'state/current-user/selectors';
@@ -25,7 +28,6 @@ import { localize } from 'i18n-calypso';
 import wpcom from 'lib/wp';
 
 const debug = debugFactory( 'calypso:magic-login' );
-const loginUrl = config( 'native_login_url' );
 
 class RequestLoginEmailForm extends React.Component {
 	state = {
@@ -126,7 +128,7 @@ class RequestLoginEmailForm extends React.Component {
 						onDismissClick={ this.handleNoticeDismiss }
 						status="is-error" />
 				}
-				<LoggedOutForm onSubmit={ this.handleSubmit }>
+				<LoggedOutForm onSubmit={ this.props.onSubmit }>
 					<p>{
 						translate( 'Get a link sent to the email address associated ' +
 							'with your account to log in instantly without your password.' )
@@ -157,7 +159,7 @@ class RequestLoginEmailForm extends React.Component {
 					</FormFieldset>
 				</LoggedOutForm>
 				<LoggedOutFormLinks>
-					<LoggedOutFormLinkItem href={ loginUrl }>
+					<LoggedOutFormLinkItem onClick={ this.props.onEnterPasswordInsteadClick }>
 						{ translate( 'Enter a password instead' ) }
 					</LoggedOutFormLinkItem>
 				</LoggedOutFormLinks>
@@ -172,4 +174,43 @@ const mapState = state => {
 	};
 };
 
-export default connect( mapState )( localize( RequestLoginEmailForm ) );
+const mapDispatch = dispatch => {
+	return {
+		onEnterPasswordInsteadClick: event => {
+			event.preventDefault();
+			dispatch( hideMagicLoginRequestForm() );
+		},
+		onSubmit: event => {
+			event.preventDefault();
+			dispatch( fetchMagicLoginRequestEmail( this.props.email ) );
+		},
+	};
+};
+
+		/*
+		const emailAddress = formState.getFieldValue( this.state.form, 'emailAddress' );
+		debug( 'form submitted!', emailAddress );
+
+		if ( ! emailAddress ) {
+			return;
+		}
+
+		this.setState( {
+			hasSubmitted: true,
+		} );
+
+		wpcom.undocumented().requestMagicLoginEmail( {
+			email: emailAddress
+		}, ( error, data ) => {
+			if ( error ) {
+				this.handleError( error );
+				return;
+			}
+			debug( 'Request successful', data );
+			window.location.replace( '/login/link-was-sent?email=' + encodeURIComponent( emailAddress ) );
+		} );
+	},
+};
+*/
+
+export default connect( mapState, mapDispatch )( localize( RequestLoginEmailForm ) );
