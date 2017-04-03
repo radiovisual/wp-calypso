@@ -90,7 +90,7 @@ class SharingButtonsAppearance extends Component {
 						type="checkbox"
 						checked={ this.isReblogButtonEnabled() }
 						onChange={ this.onReblogsLikesCheckboxClicked }
-						disabled={ ! this.props.initialized }
+						disabled={ this.props.saving }
 					/>
 					<span>{ this.props.translate( 'Show reblog button', { context: 'Sharing options: Checkbox label' } ) }</span>
 				</label>
@@ -112,7 +112,7 @@ class SharingButtonsAppearance extends Component {
 							type="checkbox"
 							checked={ this.isLikeButtonEnabled() }
 							onChange={ this.onReblogsLikesCheckboxClicked }
-							disabled={ ! this.props.initialized }
+							disabled={ this.props.saving }
 						/>
 						<span>{ this.props.translate( 'Show like button', { context: 'Sharing options: Checkbox label' } ) }</span>
 					</label>
@@ -137,7 +137,7 @@ class SharingButtonsAppearance extends Component {
 					<ButtonsStyle
 						onChange={ changeButtonStyle }
 						value={ this.props.values.sharing_button_style }
-						disabled={ ! this.props.initialized }
+						disabled={ this.props.saving }
 					/>
 					{ this.getReblogLikeOptionsElement() }
 				</div>
@@ -145,7 +145,7 @@ class SharingButtonsAppearance extends Component {
 				<button
 					type="submit"
 					className="button is-primary sharing-buttons__submit"
-					disabled={ this.props.saving || ! this.props.initialized }
+					disabled={ this.props.saving }
 				>
 					{ this.props.saving ? this.props.translate( 'Saving…' ) : this.props.translate( 'Save Changes' ) }
 				</button>
