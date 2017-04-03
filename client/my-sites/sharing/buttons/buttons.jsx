@@ -21,6 +21,7 @@ import { getSharingButtons, isSavingSharingButtons, isSharingButtonsSaveSuccess
 import { recordGoogleEvent } from 'state/analytics/actions';
 import { successNotice, errorNotice } from 'state/notices/actions';
 import { protectForm } from 'lib/protect-form';
+import DEFAULT_BUTTONS from './default-buttons';
 
 class SharingButtons extends Component {
 	state = {
@@ -115,7 +116,7 @@ const connectComponent = connect(
 	state => {
 		const siteId = getSelectedSiteId( state );
 		const settings = getSiteSettings( state, siteId );
-		const buttons = getSharingButtons( state, siteId );
+		const buttons = getSharingButtons( state, siteId ) || DEFAULT_BUTTONS;
 		const isSavingSettings = isSavingSiteSettings( state, siteId );
 		const isSavingButtons = isSavingSharingButtons( state, siteId );
 		const isSaveSettingsSuccessful = isSiteSettingsSaveSuccessful( state, siteId );
