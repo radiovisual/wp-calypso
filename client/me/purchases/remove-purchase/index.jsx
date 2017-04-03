@@ -325,7 +325,6 @@ class RemovePurchase extends Component {
 					onClick: this.removePurchase
 				}
 			},
-			productName = getName( getPurchase( this.props ) ),
 			inStepOne = this.state.surveyStep === 1;
 
 		let buttonsArr;
@@ -346,7 +345,12 @@ class RemovePurchase extends Component {
 					className="remove-purchase__dialog"
 					isVisible={ this.state.isDialogVisible }
 					onClose={ this.closeDialog }>
-					<FormSectionHeading>{ translate( 'Remove %(productName)s', { args: { productName } } ) }</FormSectionHeading>
+					<FormSectionHeading>
+						{ translate( 'Your thoughts are needed.' ) }
+					</FormSectionHeading>
+					<p>
+						{ translate( 'Before you go, please answer a few quick questions to help us improve WordPress.com.' ) }
+					</p>
 					<CancelPurchaseForm
 						surveyStep={ this.state.surveyStep }
 						showSurvey={ config.isEnabled( 'upgrades/removal-survey' ) }
