@@ -59,7 +59,7 @@ class SharingButtonsAppearance extends Component {
 	};
 
 	getPreviewElement() {
-		if ( this.props.initialized ) {
+		if ( ! this.props.loading ) {
 			const changeLabel = partial( this.props.onChange, 'sharing_label' );
 
 			return (
