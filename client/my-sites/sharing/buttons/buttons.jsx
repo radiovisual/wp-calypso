@@ -116,7 +116,7 @@ const connectComponent = connect(
 	state => {
 		const siteId = getSelectedSiteId( state );
 		const settings = getSiteSettings( state, siteId );
-		const buttons = getSharingButtons( state, siteId ) || DEFAULT_BUTTONS;
+		const buttons = getSharingButtons( state, siteId );
 		const isSavingSettings = isSavingSiteSettings( state, siteId );
 		const isSavingButtons = isSavingSharingButtons( state, siteId );
 		const isSaveSettingsSuccessful = isSiteSettingsSaveSuccessful( state, siteId );
@@ -127,7 +127,7 @@ const connectComponent = connect(
 			isSaveSettingsSuccessful,
 			isSaveButtonsSuccessful,
 			settings,
-			buttons,
+			buttons: buttons || DEFAULT_BUTTONS,
 			siteId
 		};
 	},
